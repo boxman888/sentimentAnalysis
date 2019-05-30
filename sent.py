@@ -3,7 +3,6 @@ import re
 import sys
 
 from string import punctuation
-from sklearn.feature_extraction.text import CountVectorizer
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -22,12 +21,10 @@ class LoadData:
        sentance = self.strip_punctuation(line)
        bucket = sentance.split('\t')
 
-       #bucket[0] = bucket[0].rstrip() 
-       #words.append(bucket[0].split(" "))
        words.append(bucket[0])
        
        classes.append(int(bucket[1].strip(' \n')))
-    return [''.join([(row) for row in words])], np.asarray(classes)
+    return ''.join([(row) for row in words]), np.asarray(classes)
 
 class BagOWords:
     def __init__(self, data):
@@ -36,9 +33,8 @@ class BagOWords:
         self.frequency = None
 
     def _extractWords(self, sentence):
-        ignore_words =['a']
         words = re.sub("[^\w]", " ", sentence).split()
-        words_cleaned =[w.lower() for w in words if w not in ignore_words]
+        words_cleaned =[w.lower() for w in words]
         return words_cleaned
 
     def _tokenize(self, sentences):
@@ -50,10 +46,10 @@ class BagOWords:
       words = sorted(list(set(words)))
       return words
 
-    def _bagowords(self, sentence, words):
+    def _bagofwords(self, sentence, words):
       sentence_words = self._extractWords(sentence)
       bag = np.zeros(len(words))
-      for sw in self.sentence_words:
+      for sw in sentence_words:
         for i, word in enumerate(words):
           if word == sw:
             bag[i] += 1
@@ -62,13 +58,10 @@ class BagOWords:
 
     def process(self):
       vocabulary = self._tokenize(self.data)
-      #bagofwords(self.data, vocabulary)
-      vectorizer = CountVectorizer(analyzer = "word", tokenizer = None,
-              preprocessor = None, stop_words = None, max_features = 10000)
-      train = vectorizer.fit_transform(self.data)
+      frequency = self._bagofwords(self.data, vocabulary)
       
       self.vocabulary = np.asarray(vocabulary)
-      self.frequency = np.asarray(vectorizer.transform(self.data).toarray())
+      self.frequency = np.asarray(frequency)
 
       return self.vocabulary, self.frequency
 
