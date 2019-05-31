@@ -24,7 +24,7 @@ class LoadData:
        words.append(bucket[0])
        
        classes.append(int(bucket[1].strip(' \n')))
-    return ''.join([(row) for row in words]), np.asarray(classes)
+    return ''.join([(row+"\n") for row in words]), np.asarray(classes)
 
 class BagOWords:
     def __init__(self, data):
@@ -38,6 +38,7 @@ class BagOWords:
         return words_cleaned
 
     def _tokenize(self, sentences):
+      sentences = self._extractWords(sentences)
       words = []
       for sentence in sentences:
           w = self._extractWords(sentence)
@@ -54,20 +55,36 @@ class BagOWords:
           if word == sw:
             bag[i] += 1
 
-      return np.array(bag)
+      return bag
 
     def process(self):
       vocabulary = self._tokenize(self.data)
-      frequency = self._bagofwords(self.data, vocabulary)
       
-      self.vocabulary = np.asarray(vocabulary)
-      self.frequency = np.asarray(frequency)
+      tweets = self.data.split('\n')
+      
+      features = []
+      for tweet in tweets:
+        frequency = self._bagofwords(tweet, vocabulary)
+        features.append(frequency)
 
-      return self.vocabulary, self.frequency
+      with open("test.txt", "w") as fp:
+        fp.write(','.join(vocabulary)+',classlabel\n')
+        for row in features:
+          r = row.astype(int)
+          r = r.astype(str)
+          r = r.tolist()
+          fp.write(','.join(r)+'\n')
+      #self.vocabulary = np.asarray(vocabulary)
+      #self.frequency = np.asarray(frequency)
+
+      #return self.vocabulary, self.frequency
 
 if __name__ == "__main__":
    train = LoadData("trainingSet.txt")
    book, classes = train.getData()
    bag = BagOWords(book)
-   vocabulary, frequency = bag.process()
+   bag.process()
+   #vocabulary, frequency = bag.process()
+   #print(vocabulary)
+   #print(frequency)
    
