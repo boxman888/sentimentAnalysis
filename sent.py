@@ -57,11 +57,11 @@ class BagOWords:
 
       return np.asarray(bag,dtype=int)
 
-    def process(self, FILE):
+    def process(self, FILE, classes):
       vocabulary = self._tokenize(self.data)
       
       tweets = self.data.split('\n')
-      
+
       features = []
       for tweet in tweets:
         frequency = self._bagofwords(tweet, vocabulary)
@@ -73,19 +73,23 @@ class BagOWords:
           r = row.astype(str)
           r = r.tolist()
           fp.write(','.join(r)+'\n')
+      
+
+      return [(tweets[i], classes[i]) for i in range(len(classes))]
 
 if __name__ == "__main__":
    train = LoadData("trainingSet.txt")
    test = LoadData("testSet.txt")
 
-   train_book, train_classes = train.getData()
-   test_book, test_classes = test.getData()
+   train_tweets, train_classes = train.getData()
+   test_tweets, test_classes = test.getData()
    
-   train_dictionary = BagOWords(train_book)
-   test_dictionary = BagOWords(test_book)
-
-   train_dictionary.process("preprocessed_train.txt")
-   test_dictionary.process("preprocessed_test.txt")
-
+   train_dictionary = BagOWords(train_tweets)
+   test_dictionary = BagOWords(test_tweets)
+   
+   # Return the processed tweets for train and test. Now a tuple with (string, bool)
+   # This allows us to map a users tweet to a positive or negative feeling.
+   train_tweets = train_dictionary.process("preprocessed_train.txt", train_classes)
+   test_tweets = test_dictionary.process("preprocessed_test.txt", test_classes)
 
    
