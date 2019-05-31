@@ -55,9 +55,9 @@ class BagOWords:
           if word == sw:
             bag[i] += 1
 
-      return bag
+      return np.asarray(bag,dtype=int)
 
-    def process(self):
+    def process(self, FILE):
       vocabulary = self._tokenize(self.data)
       
       tweets = self.data.split('\n')
@@ -67,24 +67,25 @@ class BagOWords:
         frequency = self._bagofwords(tweet, vocabulary)
         features.append(frequency)
 
-      with open("test.txt", "w") as fp:
+      with open(FILE, "w") as fp:
         fp.write(','.join(vocabulary)+',classlabel\n')
         for row in features:
-          r = row.astype(int)
-          r = r.astype(str)
+          r = row.astype(str)
           r = r.tolist()
           fp.write(','.join(r)+'\n')
-      #self.vocabulary = np.asarray(vocabulary)
-      #self.frequency = np.asarray(frequency)
-
-      #return self.vocabulary, self.frequency
 
 if __name__ == "__main__":
    train = LoadData("trainingSet.txt")
-   book, classes = train.getData()
-   bag = BagOWords(book)
-   bag.process()
-   #vocabulary, frequency = bag.process()
-   #print(vocabulary)
-   #print(frequency)
+   test = LoadData("testSet.txt")
+
+   train_book, train_classes = train.getData()
+   test_book, test_classes = test.getData()
+   
+   train_dictionary = BagOWords(train_book)
+   test_dictionary = BagOWords(test_book)
+
+   train_dictionary.process("preprocessed_train.txt")
+   test_dictionary.process("preprocessed_test.txt")
+
+
    
