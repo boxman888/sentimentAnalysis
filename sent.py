@@ -22,7 +22,7 @@ class LoadData:
        sentance = self.strip_punctuation(line)
        bucket = sentance.split('\t')
 
-       words.append(bucket[0]) 
+       words.append(re.sub(r'\d+', '', bucket[0])) 
        classes.append(int(bucket[1].strip(' \n')))
 
     return ''.join([(row+"\n") for row in words]), np.asarray(classes)
