@@ -158,17 +158,29 @@ class Classify:
       weightOfPos = self.probGenerator(1)
       weightOfNeg = self.probGenerator(0)
       
-      predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.trainingFeatures) 
-    #   print(self.accuracy(predictions, self.trainingMap))
+      predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.trainingFeatures)
+
+      # Print to stdout
+      print("Training: trainingSet.txt")
+      print("Testing:  trainingSet.txt")
+      print("Accuracy: " + str(self.accuracy(predictions, self.trainingMap)) + "\n")
+
+      # Write to output file
       fp = open("results.txt", "w")
       fp.write("Training: trainingSet.txt\n")
-      fp.write("Testing: trainingSet.txt\n")
+      fp.write("Testing:  trainingSet.txt\n")
       fp.write("Accuracy: " + str(self.accuracy(predictions, self.trainingMap)) + "\n\n")
       
-      predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.testingFeatures) 
-    #   print(self.accuracy(predictions, self.testingMap))
+      predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.testingFeatures)
+
+      # Print to stdout
+      print("Training: trainingSet.txt")
+      print("Testing:  testSet.txt")
+      print("Accuracy: " + str(self.accuracy(predictions, self.testingMap)))
+
+      # Write to output file
       fp.write("Training: trainingSet.txt\n")
-      fp.write("Testing: testSet.txt\n")
+      fp.write("Testing:  testSet.txt\n")
       fp.write("Accuracy: " + str(self.accuracy(predictions, self.testingMap)) + "\n")
       fp.close()
 
