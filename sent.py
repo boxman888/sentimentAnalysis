@@ -28,10 +28,12 @@ class LoadData:
     return ''.join([(row+"\n") for row in words]), np.asarray(classes)
 
 class BagOWords:
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, train, test):
+        self.trainData = train
+        self.testData = test
         self.vocabulary = None
-        self.features = None
+        self.featuresTest = None
+        self.featuresTrain = None
 
     def _extractWords(self, sentence):
         words = re.sub("[^\w]", " ", sentence).split()
@@ -58,41 +60,59 @@ class BagOWords:
 
       return np.asarray(bag, dtype=int)
 
-    def process(self, FILE, classes):
-      vocabulary = self._tokenize(self.data)
-      self.vocabulary = vocabulary
-
-      tweets = self.data.split('\n')
-      tweets = list(filter(None, tweets))
-
-      features = []
-      for i, tweet in enumerate(tweets):
-        frequency = self._bagofwords(tweet, vocabulary)
-        frequency = np.append(frequency, [classes[i]])
-        features.append(frequency)
-
+    def saveFile(self, FILE, vocab, features):
       with open(FILE, "w") as fp:
-        fp.write(','.join(vocabulary)+',classlabel\n')
+        fp.write(','.join(vocab) + ',classlabel\n')
         for row in features:
           r = row.astype(str)
           r = r.tolist()
           fp.write(','.join(r) + '\n')
 
-      self.features = features
-      return [(tweets[i], classes[i]) for i in range(len(classes))]
+    def genFeatures(self, tweets, vocab, classes):
+      features = []
+      for i, tweet in enumerate(tweets):
+        frequency = self._bagofwords(tweet, vocab)
+        frequency = np.append(frequency, [classes[i]])
+        features.append(frequency)
+
+      return features
+
+    def process(self, train_classes, test_classes):
+      vocabulary = self._tokenize(self.trainData)
+      self.vocabulary = vocabulary
+
+      train_tweets = self.trainData.split('\n')
+      train_tweets = list(filter(None, train_tweets))
+      
+      features_train = self.genFeatures(train_tweets, vocabulary, train_classes)
+      self.saveFile("preprocessed_train.txt", vocabulary, features_train)
+      
+      test_tweets = self.testData.split('\n')
+      test_tweets = list(filter(None, test_tweets))
+     
+      features_test = self.genFeatures(test_tweets, vocabulary, test_classes) 
+      self.saveFile("preprocessed_test.txt", vocabulary, features_test)
+
+      self.featuresTest = features_test
+      self.featuresTrain = features_train
+
+    #   print(len(train_classes), len(test_classes))
+    #   print(len(train_tweets), len(test_tweets))
+      return [(train_tweets[i], train_classes[i]) for i in range(len(train_classes))], [(test_tweets[i], test_classes[i]) for i in range(len(test_classes))]
 
 class Classify:
-    def __init__(self, traning, testing, trainingObj):
+    def __init__(self, traning, testing, bagObj):
       self.trainingMap = np.asarray(traning)
-      self.trainingVocab = trainingObj.vocabulary
-      self.trainingFeatures = trainingObj.features
+      self.vocab = bagObj.vocabulary
+      self.testingFeatures = bagObj.featuresTest
+      self.trainingFeatures = bagObj.featuresTrain
       self.testingMap = np.asarray(testing)
 
     def getPosDistribution(self):
       return np.sum((self.trainingMap[:, 1].astype(int))) / len(self.trainingMap)
 
     def probGenerator(self, classID):
-      wordCount = len(self.trainingVocab)+1
+      wordCount = len(self.vocab)+1
       state = np.zeros(wordCount)
       found = 0
       for feature in self.trainingFeatures:
@@ -109,9 +129,9 @@ class Classify:
           state[i] = state[i] / found
       return state
     
-    def Predict(self, probRatio, weightOfPos, weightOfNeg):
+    def Predict(self, probRatio, weightOfPos, weightOfNeg, data):
       classify = []
-      for feature in self.trainingFeatures:
+      for feature in data:
         count = 0
         for i, w in enumerate(feature):
           if w == 1:
@@ -123,10 +143,10 @@ class Classify:
        
       return classify
 
-    def accuracy(self, predictions):
+    def accuracy(self, predictions, data):
       count = 0
       for i in range(len(predictions)):
-        if predictions[i] == int(self.trainingMap[i, 1]):
+        if predictions[i] == int(data[i, 1]):
           count += 1
       return (count / len(predictions)) * 100
                   
@@ -138,10 +158,19 @@ class Classify:
       weightOfPos = self.probGenerator(1)
       weightOfNeg = self.probGenerator(0)
       
-      predictions = self.Predict(probRatio, weightOfPos, weightOfNeg)
+      predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.trainingFeatures) 
+    #   print(self.accuracy(predictions, self.trainingMap))
+      fp = open("results.txt", "w")
+      fp.write("Training: trainingSet.txt\n")
+      fp.write("Testing: trainingSet.txt\n")
+      fp.write("Accuracy: " + str(self.accuracy(predictions, self.trainingMap)) + "\n\n")
       
-      print(self.accuracy(predictions))
-      #predict = probRatio + np.sum(np.log(weightOfPos / weightOfNeg))
+      predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.testingFeatures) 
+    #   print(self.accuracy(predictions, self.testingMap))
+      fp.write("Training: trainingSet.txt\n")
+      fp.write("Testing: testSet.txt\n")
+      fp.write("Accuracy: " + str(self.accuracy(predictions, self.testingMap)) + "\n")
+      fp.close()
 
 if __name__ == "__main__":
    train = LoadData("trainingSet.txt")
@@ -152,14 +181,11 @@ if __name__ == "__main__":
    train_tweets, train_classes = train.getData()
    test_tweets, test_classes = test.getData()
    
-   train_dictionary = BagOWords(train_tweets)
-   test_dictionary = BagOWords(test_tweets)
+   dictionary = BagOWords(train_tweets, test_tweets)
 
-    
    # Return the processed tweets for train and test. Now a tuple with (string, bool)
    # This allows us to map a users tweet to a positive or negative feeling.
-   train_tweets = train_dictionary.process("preprocessed_train.txt", train_classes)
-   test_tweets = test_dictionary.process("preprocessed_test.txt", test_classes)
-   
-   classify = Classify(train_tweets, test_tweets, train_dictionary)
+   train_tweets, test_tweets = dictionary.process(train_classes, test_classes)
+
+   classify = Classify(train_tweets, test_tweets, dictionary)
    classify.process()
