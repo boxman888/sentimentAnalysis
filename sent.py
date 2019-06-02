@@ -96,8 +96,8 @@ class BagOWords:
       self.featuresTest = features_test
       self.featuresTrain = features_train
 
-      print(len(train_classes), len(test_classes))
-      print(len(train_tweets), len(test_tweets))
+    #   print(len(train_classes), len(test_classes))
+    #   print(len(train_tweets), len(test_tweets))
       return [(train_tweets[i], train_classes[i]) for i in range(len(train_classes))], [(test_tweets[i], test_classes[i]) for i in range(len(test_classes))]
 
 class Classify:
@@ -159,11 +159,18 @@ class Classify:
       weightOfNeg = self.probGenerator(0)
       
       predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.trainingFeatures) 
-      print(self.accuracy(predictions, self.trainingMap))
+    #   print(self.accuracy(predictions, self.trainingMap))
+      fp = open("results.txt", "w")
+      fp.write("Training: trainingSet.txt\n")
+      fp.write("Testing: trainingSet.txt\n")
+      fp.write("Accuracy: " + str(self.accuracy(predictions, self.trainingMap)) + "\n\n")
       
       predictions = self.Predict(probRatio, weightOfPos, weightOfNeg, self.testingFeatures) 
-      print(self.accuracy(predictions, self.testingMap))
-      #predict = probRatio + np.sum(np.log(weightOfPos / weightOfNeg))
+    #   print(self.accuracy(predictions, self.testingMap))
+      fp.write("Training: trainingSet.txt\n")
+      fp.write("Testing: testSet.txt\n")
+      fp.write("Accuracy: " + str(self.accuracy(predictions, self.testingMap)) + "\n")
+      fp.close()
 
 if __name__ == "__main__":
    train = LoadData("trainingSet.txt")
