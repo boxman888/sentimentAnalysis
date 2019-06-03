@@ -1,0 +1,7 @@
+Training: trainingSet.txt
+Testing:  trainingSet.txt
+Accuracy: 99.79959919839679
+
+Training: trainingSet.txt
+Testing:  testSet.txt
+Accuracy: 92.5553319919517

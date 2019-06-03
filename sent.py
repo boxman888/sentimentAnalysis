@@ -35,23 +35,23 @@ class BagOWords:
         self.featuresTest = None
         self.featuresTrain = None
 
-    def _extractWords(self, sentence):
+    def __extractWords(self, sentence):
         words = re.sub("[^\w]", " ", sentence).split()
         words_cleaned =[w.lower() for w in words]
         return words_cleaned
 
-    def _tokenize(self, sentences):
-      sentences = self._extractWords(sentences)
+    def __tokenize(self, sentences):
+      sentences = self.__extractWords(sentences)
       words = []
       for sentence in sentences:
-          w = self._extractWords(sentence)
+          w = self.__extractWords(sentence)
           words.extend(w)
 
       words = sorted(list(set(words)))
       return words
 
-    def _bagofwords(self, sentence, words):
-      sentence_words = self._extractWords(sentence)
+    def __bagofwords(self, sentence, words):
+      sentence_words = self.__extractWords(sentence)
       bag = np.zeros(len(words))
       for sw in sentence_words:
         for i, word in enumerate(words):
@@ -60,7 +60,7 @@ class BagOWords:
 
       return np.asarray(bag, dtype=int)
 
-    def saveFile(self, FILE, vocab, features):
+    def __saveFile(self, FILE, vocab, features):
       with open(FILE, "w") as fp:
         fp.write(','.join(vocab) + ',classlabel\n')
         for row in features:
@@ -68,30 +68,30 @@ class BagOWords:
           r = r.tolist()
           fp.write(','.join(r) + '\n')
 
-    def genFeatures(self, tweets, vocab, classes):
+    def __genFeatures(self, tweets, vocab, classes):
       features = []
       for i, tweet in enumerate(tweets):
-        frequency = self._bagofwords(tweet, vocab)
+        frequency = self.__bagofwords(tweet, vocab)
         frequency = np.append(frequency, [classes[i]])
         features.append(frequency)
 
       return features
 
     def process(self, train_classes, test_classes):
-      vocabulary = self._tokenize(self.trainData)
+      vocabulary = self.__tokenize(self.trainData)
       self.vocabulary = vocabulary
 
       train_tweets = self.trainData.split('\n')
       train_tweets = list(filter(None, train_tweets))
       
-      features_train = self.genFeatures(train_tweets, vocabulary, train_classes)
-      self.saveFile("preprocessed_train.txt", vocabulary, features_train)
+      features_train = self.__genFeatures(train_tweets, vocabulary, train_classes)
+      self.__saveFile("preprocessed_train.txt", vocabulary, features_train)
       
       test_tweets = self.testData.split('\n')
       test_tweets = list(filter(None, test_tweets))
      
-      features_test = self.genFeatures(test_tweets, vocabulary, test_classes) 
-      self.saveFile("preprocessed_test.txt", vocabulary, features_test)
+      features_test = self.__genFeatures(test_tweets, vocabulary, test_classes) 
+      self.__saveFile("preprocessed_test.txt", vocabulary, features_test)
 
       self.featuresTest = features_test
       self.featuresTrain = features_train
